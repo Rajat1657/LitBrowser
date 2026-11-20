@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lit Browser - Settings</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card-bg: #1e1e1e;
+      --card-bg-hover: #222222;
+      --input-bg: #141414;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --text: #e5e5e5;
+      --text-muted: #8e8e93;
+      --text-dim: #636366;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --danger-border: rgba(239, 68, 68, 0.3);
+      --success: #10b981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: 40px 20px 80px;
+      overflow-y: overlay;
+    }
+
+    /* Container: max 700px centered */
+    .settings-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .settings-header {
+      margin-bottom: 28px;
+    }
+
+    .settings-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .settings-title .badge {
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .settings-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Collapsible Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .card-header:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .card-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .card-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .card-title-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .chevron {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-shrink: 0;
+    }
+
+    .card.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Accordion Animation using CSS Grid */
+    .card-body-wrapper {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .card.open .card-body-wrapper {
+      grid-template-rows: 1fr;
+    }
+
+    .card-body {
+      overflow: hidden;
+    }
+
+    .card-content {
+      padding: 6px 20px 20px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Setting Rows */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      gap: 20px;
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+
+    .setting-info {
+      flex: 1;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      font-weight: 400;
+      color: #f0f0f0;
+    }
+
+    .setting-sublabel {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Custom Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #333333;
+      transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Inputs & Selects */
+    .lit-input {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 240px;
+      max-width: 100%;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .lit-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .lit-select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 32px 8px 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      min-width: 160px;
+      transition: border-color 0.2s ease;
+    }
+
+    .lit-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: #2a2a2a;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #333333;
+      border-color: var(--border-hover);
+      color: #ffffff;
+    }
+
+    .btn-danger {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-icon {
+      padding: 6px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-icon:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-icon.danger:hover {
+      color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    /* Theme Segmented Buttons */
+    .theme-buttons {
+      display: inline-flex;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .theme-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .theme-btn:hover {
+      color: var(--text);
+    }
+
+    .theme-btn.active {
+      background: #2c2c2e;
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Sub-tabs within Autofill */
+    .subtabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 8px;
+    }
+
+    .subtab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .subtab-btn:hover {
+      color: var(--text);
+    }
+
+    .subtab-btn.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+
+    .subtab-content {
+      display: none;
+    }
+
+    .subtab-content.active {
+      display: block;
+    }
+
+    /* Tables */
+    .data-table-container {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 12px;
+      background: #181818;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .data-table th {
+      background: #141414;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+    }
+
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .masked-pass {
+      font-family: monospace;
+      letter-spacing: 2px;
+      display: inline-block;
+      user-select: none;
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .empty-state {
+      padding: 24px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    /* List Items for Autofill */
+    .autofill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .autofill-card {
+      background: #181818;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .autofill-card-info strong {
+      display: block;
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .autofill-card-info span {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* About Section Grid */
+    .about-box {
+      text-align: center;
+      padding: 20px 0 10px;
+    }
+
+    .about-logo {
+      font-size: 36px;
+      font-weight: 300;
+      color: #ffffff;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+
+    .about-tagline {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 24px;
+    }
+
+    .about-specs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px 0 24px;
+    }
+
+    .spec-item {
+      background: #161616;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .spec-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .spec-value {
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-dialog {
+      background: #1e1e1e;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 440px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      transform: scale(0.95);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.active .modal-dialog {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 14px;
+    }
+
+    .modal-form-group {
+      margin-bottom: 14px;
+    }
+
+    .modal-form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .modal-form-group input,
+    .modal-form-group select {
+      width: 100%;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Checkbox list inside modal */
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #252525;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(30px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 2000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .toast-icon {
+      color: var(--success);
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="settings-container">
+    <!-- Page Header -->
+    <header class="settings-header">
+      <h1 class="settings-title">
+        Settings
+        <span class="badge">v1.0.0</span>
+      </h1>
+      <p class="settings-subtitle">Manage browser preferences, security, and autofill</p>
+    </header>
+
+    <!-- SECTION 1: GENERAL -->
+    <div class="card open" id="cardGeneral">
+      <div class="card-header" onclick="toggleCard('cardGeneral')">
+        <div class="card-header-left">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <span class="card-title">General</span>
+            <span class="card-desc">Default search engine and home page startup URL</span>
+          </div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="card-body-wrapper">
+        <div class="card-body">
+          <div class="card-content">
+            <!-- Search engine -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Search Engine</div>
+                <div class="setting-sublabel">Engine used when searching from address bar and new tab</div>
+              </div>
+              <select class="lit-select" id="searchEngineSelect" onchange="saveGeneralSettings()">
+                <option value="duckduckgo">DuckDuckGo</option>
+                <option value="google">Google</option>
+                <option value="bing">Bing</option>
+                <option value="ecosia">Ecosia</option>
+                <option value="brave">Brave Search</option>
+              </select>
+            </div>
+            <!-- Home page -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Home Page</div>
+                <div class="setting-sublabel">URL opened when launching or clicking the home button</div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" class="lit-input" id="homepageInput" value="lit://newtab" placeholder="lit://newtab" />
+                <button class="btn btn-secondary" onclick="saveGeneralSettings()">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: APPEARANCE -->
+    <div class="card open" id="cardAppearance">
+      <div class="card-header" onclick="toggleCard('cardAppearance')">
+        <div class="card-header-left">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <span class="card-title">Appearance</span>
+            <span class="card-desc">Color palette and interface appearance mode</span>
+          </div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="card-body-wrapper">
+        <div class="card-body">
+          <div class="card-content">
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Theme</div>
+                <div class="setting-sublabel">Select preferred theme mode for Lit UI and browser chrome</div>
+              </div>
+              <div class="theme-buttons">
+                <button type="button" class="theme-btn active" id="btnThemeDark" onclick="setTheme('dark')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                  Dark
+                </button>
+                <button type="button" class="theme-btn" id="btnThemeLight" onclick="setTheme('light')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                  </svg>
+                  Light
+                </button>
+                <button type="button" class="theme-btn" id="btnThemeSystem" onclick="setTheme('system')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  System
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: PRIVACY -->
+    <div class="card open" id="cardPrivacy">
+      <div class="card-header" onclick="toggleCard('cardPrivacy')">
+        <div class="card-header-left">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <span class="card-title">Privacy & Security</span>
+            <span class="card-desc">Ad blocking, anti-tracking, DNT, and browsing data</span>
+          </div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="card-body-wrapper">
+        <div class="card-body">
+          <div class="card-content">
+            <!-- Ad blocker toggle -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Ad Blocker</div>
+                <div class="setting-sublabel">Block intrusive ads, malicious banners, and popups</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="adBlockToggle" checked onchange="savePrivacySettings()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <!-- Tracker toggle -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Tracker Protection</div>
+                <div class="setting-sublabel">Prevent cross-site trackers and canvas/audio fingerprinting</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="trackerToggle" checked onchange="savePrivacySettings()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <!-- DNT toggle -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Do Not Track (DNT)</div>
+                <div class="setting-sublabel">Send DNT=1 and Global Privacy Control headers with requests</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="dntToggle" checked onchange="savePrivacySettings()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <!-- Clear data button -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Clear Browsing Data</div>
+                <div class="setting-sublabel">Delete history, cookies, cached media, and local storage</div>
+              </div>
+              <button class="btn btn-danger" onclick="openClearDataModal()">Clear Data...</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: PASSWORDS -->
+    <div class="card open" id="cardPasswords">
+      <div class="card-header" onclick="toggleCard('cardPasswords')">
+        <div class="card-header-left">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <span class="card-title">Passwords</span>
+            <span class="card-desc">Master password encryption and saved logins</span>
+          </div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="card-body-wrapper">
+        <div class="card-body">
+          <div class="card-content">
+            <!-- Master password row -->
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Master Password</div>
+                <div class="setting-sublabel" id="masterPasswordStatus">Protect saved passwords with high-grade master encryption</div>
+              </div>
+              <button class="btn btn-secondary" id="btnMasterPassword" onclick="openMasterPasswordModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 2l-2 2m-1-1l-3 3m2-2l-3 3m2-2l-3 3M3 21l8-8m0 0a5 5 0 1 0-7-7 5 5 0 0 0 7 7z"></path>
+                </svg>
+                Set Master Password
+              </button>
+            </div>
+
+            <!-- Passwords Table Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px;">
+              <span style="font-size: 13px; font-weight: 500; color: #ffffff;">Saved Logins</span>
+              <button class="btn btn-secondary" onclick="openAddPasswordModal()" style="font-size: 12px; padding: 5px 10px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Login
+              </button>
+            </div>
+
+            <!-- Passwords Table -->
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Site</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="passwordsTableBody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: AUTOFILL -->
+    <div class="card open" id="cardAutofill">
+      <div class="card-header" onclick="toggleCard('cardAutofill')">
+        <div class="card-header-left">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <span class="card-title">Autofill</span>
+            <span class="card-desc">Personal info, shipping addresses, and payment methods</span>
+          </div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="card-body-wrapper">
+        <div class="card-body">
+          <div class="card-content">
+            <!-- Autofill Sub-Tabs -->
+            <div class="subtabs">
+              <button class="subtab-btn active" onclick="switchAutofillTab('personal')">Personal Info</button>
+              <button class="subtab-btn" onclick="switchAutofillTab('addresses')">Addresses</button>
+              <button class="subtab-btn" onclick="switchAutofillTab('payment')">Payment Methods</button>
+            </div>
+
+            <!-- TAB 1: Personal Info -->
+            <div class="subtab-content active" id="tabPersonal">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="setting-sublabel">Quickly fill forms with your contact information</span>
+                <button class="btn btn-secondary" onclick="openAddPersonalModal()" style="font-size: 12px; padding: 5px 10px;">
+                  + Add Info
+                </button>
+              </div>
+              <div class="autofill-list" id="personalList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- TAB 2: Addresses -->
+            <div class="subtab-content" id="tabAddresses">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="setting-sublabel">Saved addresses for checkout and deliveries</span>
+                <button class="btn btn-secondary" onclick="openAddAddressModal()" style="font-size: 12px; padding: 5px 10px;">
+                  + Add Address
+                </button>
+              </div>
+              <div class="autofill-list" id="addressesList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- TAB 3: Payment Methods -->
+            <div class="subtab-content" id="tabPayment">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="setting-sublabel">Saved payment cards (encrypted securely)</span>
+                <button class="btn btn-secondary" onclick="openAddPaymentModal()" style="font-size: 12px; padding: 5px 10px;">
+                  + Add Card
+                </button>
+              </div>
+              <div class="autofill-list" id="paymentList">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: ABOUT -->
+    <div class="card open" id="cardAbout">
+      <div class="card-header" onclick="toggleCard('cardAbout')">
+        <div class="card-header-left">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <span class="card-title">About Lit Browser</span>
+            <span class="card-desc">Version details, philosophy, and update status</span>
+          </div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      <div class="card-body-wrapper">
+        <div class="card-body">
+          <div class="card-content">
+            <div class="about-box">
+              <div class="about-logo">Lit</div>
+              <div class="about-tagline">"No bloat. No AI. Just browsing."</div>
+
+              <div class="about-specs">
+                <div class="spec-item">
+                  <div class="spec-label">Version</div>
+                  <div class="spec-value">1.0.0 (x64)</div>
+                </div>
+                <div class="spec-item">
+                  <div class="spec-label">License</div>
+                  <div class="spec-value">MIT Open Source</div>
+                </div>
+                <div class="spec-item">
+                  <div class="spec-label">Engine</div>
+                  <div class="spec-value">Chromium Native</div>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px;">
+                <button class="btn btn-secondary" id="btnCheckUpdates" onclick="checkUpdates()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  Check for Updates
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: Clear Browsing Data -->
+  <div class="modal-overlay" id="clearDataModal">
+    <div class="modal-dialog">
+      <div class="modal-title">Clear Browsing Data</div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Choose the items you wish to clear from Lit Browser:
+      </p>
+      <div class="checkbox-list">
+        <label class="checkbox-item">
+          <input type="checkbox" id="clearHistory" checked>
+          <span>Browsing and download history</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" id="clearCookies" checked>
+          <span>Cookies and saved site data</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" id="clearCache" checked>
+          <span>Cached web images and static files</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('clearDataModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="executeClearData()">Clear Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Master Password -->
+  <div class="modal-overlay" id="masterPasswordModal">
+    <div class="modal-dialog">
+      <div class="modal-title">Set Master Password</div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Protect your saved credentials with a master encryption password.
+      </p>
+      <div class="modal-form-group">
+        <label>Master Password</label>
+        <input type="password" class="lit-input" id="inputMasterPw" placeholder="Enter password" />
+      </div>
+      <div class="modal-form-group">
+        <label>Confirm Master Password</label>
+        <input type="password" class="lit-input" id="inputMasterPwConfirm" placeholder="Confirm password" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('masterPasswordModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveMasterPassword()">Set Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Add Password -->
+  <div class="modal-overlay" id="addPasswordModal">
+    <div class="modal-dialog">
+      <div class="modal-title">Add Saved Password</div>
+      <div class="modal-form-group">
+        <label>Website URL / Domain</label>
+        <input type="text" class="lit-input" id="newPwSite" placeholder="e.g. github.com" />
+      </div>
+      <div class="modal-form-group">
+        <label>Username / Email</label>
+        <input type="text" class="lit-input" id="newPwUser" placeholder="e.g. username@example.com" />
+      </div>
+      <div class="modal-form-group">
+        <label>Password</label>
+        <input type="password" class="lit-input" id="newPwPass" placeholder="Enter password" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addPasswordModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewPassword()">Save Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: Add Personal Info -->
+  <div class="modal-overlay" id="addPersonalModal">
+    <div class="modal-dialog">
+      <div class="modal-title">Add Personal Info</div>
+      <div class="modal-form-group">
+        <label>Full Name</label>
+        <input type="text" class="lit-input" id="newPersonName" placeholder="e.g. Alex Mercer" />
+      </div>
+      <div class="modal-form-group">
+        <label>Email Address</label>
+        <input type="email" class="lit-input" id="newPersonEmail" placeholder="e.g. alex@example.com" />
+      </div>
+      <div class="modal-form-group">
+        <label>Phone Number</label>
+        <input type="tel" class="lit-input" id="newPersonPhone" placeholder="e.g. +1 (555) 019-2834" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addPersonalModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewPerson()">Save Info</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: Add Address -->
+  <div class="modal-overlay" id="addAddressModal">
+    <div class="modal-dialog">
+      <div class="modal-title">Add Address</div>
+      <div class="modal-form-group">
+        <label>Street Address</label>
+        <input type="text" class="lit-input" id="newAddrStreet" placeholder="e.g. 742 Evergreen Terrace" />
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div class="modal-form-group" style="flex: 1;">
+          <label>City</label>
+          <input type="text" class="lit-input" id="newAddrCity" placeholder="Springfield" />
+        </div>
+        <div class="modal-form-group" style="width: 100px;">
+          <label>State</label>
+          <input type="text" class="lit-input" id="newAddrState" placeholder="OR" />
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div class="modal-form-group" style="flex: 1;">
+          <label>ZIP / Postal Code</label>
+          <input type="text" class="lit-input" id="newAddrZip" placeholder="97477" />
+        </div>
+        <div class="modal-form-group" style="flex: 1;">
+          <label>Country</label>
+          <input type="text" class="lit-input" id="newAddrCountry" placeholder="United States" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addAddressModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewAddress()">Save Address</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: Add Payment Method -->
+  <div class="modal-overlay" id="addPaymentModal">
+    <div class="modal-dialog">
+      <div class="modal-title">Add Payment Card</div>
+      <div class="modal-form-group">
+        <label>Card Number</label>
+        <input type="text" class="lit-input" id="newCardNum" placeholder="•••• •••• •••• ••••" maxlength="19" />
+      </div>
+      <div class="modal-form-group">
+        <label>Name on Card</label>
+        <input type="text" class="lit-input" id="newCardName" placeholder="e.g. Alex Mercer" />
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div class="modal-form-group" style="flex: 1;">
+          <label>Expiry (MM/YY)</label>
+          <input type="text" class="lit-input" id="newCardExp" placeholder="12/28" maxlength="5" />
+        </div>
+        <div class="modal-form-group" style="width: 110px;">
+          <label>CVV / CVC</label>
+          <input type="password" class="lit-input" id="newCardCvv" placeholder="•••" maxlength="4" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addPaymentModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewPayment()">Save Card</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="toastMessage">Settings updated</span>
+  </div>
+
+  <script>
+    // Flag for Electron main process to know settings page is ready
+    window.__litSettingsReady = true;
+
+    // Toast helper
+    var toastTimeout = null;
+    function showToast(msg) {
+      var toast = document.getElementById('toast');
+      var toastMsg = document.getElementById('toastMessage');
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(function() {
+        toast.classList.remove('show');
+      }, 2600);
+    }
+
+    // Modal helpers
+    function openModal(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function closeModal(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+
+    // Collapsible card toggle
+    function toggleCard(cardId) {
+      var card = document.getElementById(cardId);
+      if (card) {
+        card.classList.toggle('open');
+      }
+    }
+
+    // SECTION 1: General Settings
+    function saveGeneralSettings() {
+      var engine = document.getElementById('searchEngineSelect').value;
+      var homepage = document.getElementById('homepageInput').value.trim() || 'lit://newtab';
+      localStorage.setItem('lit_search_engine', engine);
+      localStorage.setItem('lit_homepage', homepage);
+      showToast('General settings saved');
+    }
+
+    function loadGeneralSettings() {
+      var engine = localStorage.getItem('lit_search_engine') || 'duckduckgo';
+      var homepage = localStorage.getItem('lit_homepage') || 'lit://newtab';
+      var engineSelect = document.getElementById('searchEngineSelect');
+      var hpInput = document.getElementById('homepageInput');
+      if (engineSelect) engineSelect.value = engine;
+      if (hpInput) hpInput.value = homepage;
+    }
+
+    // SECTION 2: Appearance
+    function setTheme(mode) {
+      var buttons = {
+        dark: document.getElementById('btnThemeDark'),
+        light: document.getElementById('btnThemeLight'),
+        system: document.getElementById('btnThemeSystem')
+      };
+
+      for (var k in buttons) {
+        if (buttons[k]) buttons[k].classList.remove('active');
+      }
+
+      if (buttons[mode]) {
+        buttons[mode].classList.add('active');
+      }
+
+      localStorage.setItem('lit_theme', mode);
+      showToast('Theme set to ' + mode.charAt(0).toUpperCase() + mode.slice(1));
+    }
+
+    function loadTheme() {
+      var saved = localStorage.getItem('lit_theme') || 'dark';
+      setTheme(saved);
+    }
+
+    // SECTION 3: Privacy
+    function savePrivacySettings() {
+      var adBlock = document.getElementById('adBlockToggle').checked;
+      var tracker = document.getElementById('trackerToggle').checked;
+      var dnt = document.getElementById('dntToggle').checked;
+
+      localStorage.setItem('lit_adblock', adBlock ? '1' : '0');
+      localStorage.setItem('lit_tracker', tracker ? '1' : '0');
+      localStorage.setItem('lit_dnt', dnt ? '1' : '0');
+
+      showToast('Privacy preferences updated');
+    }
+
+    function loadPrivacySettings() {
+      var adBlock = localStorage.getItem('lit_adblock');
+      var tracker = localStorage.getItem('lit_tracker');
+      var dnt = localStorage.getItem('lit_dnt');
+
+      if (adBlock !== null) document.getElementById('adBlockToggle').checked = (adBlock === '1');
+      if (tracker !== null) document.getElementById('trackerToggle').checked = (tracker === '1');
+      if (dnt !== null) document.getElementById('dntToggle').checked = (dnt === '1');
+    }
+
+    function openClearDataModal() {
+      openModal('clearDataModal');
+    }
+
+    function executeClearData() {
+      closeModal('clearDataModal');
+      showToast('Browsing data cleared successfully');
+    }
+
+    // SECTION 4: Passwords
+    var defaultPasswords = [
+      { id: '1', site: 'github.com', user: 'rajat.dev', pass: 'ghp_SecretKey9872' },
+      { id: '2', site: 'google.com', user: 'rajat@gmail.com', pass: 'G00gleSecure#2026' },
+      { id: '3', site: 'reddit.com', user: 'lit_surfer', pass: 'KarmaHunter449!' }
+    ];
+
+    function getPasswords() {
+      var stored = localStorage.getItem('lit_passwords');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+      return defaultPasswords;
+    }
+
+    function savePasswords(list) {
+      localStorage.setItem('lit_passwords', JSON.stringify(list));
+      renderPasswordsTable();
+    }
+
+    function renderPasswordsTable() {
+      var tbody = document.getElementById('passwordsTableBody');
+      if (!tbody) return;
+      var list = getPasswords();
+      if (!list || list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No saved passwords yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      for (var i = 0; i < list.length; i++) {
+        var item = list[i];
+        var tr = document.createElement('tr');
+
+        var tdSite = document.createElement('td');
+        tdSite.style.fontWeight = '500';
+        tdSite.textContent = item.site;
+
+        var tdUser = document.createElement('td');
+        tdUser.style.color = '#a0a0a0';
+        tdUser.textContent = item.user;
+
+        var tdPass = document.createElement('td');
+        var passSpan = document.createElement('span');
+        passSpan.className = 'masked-pass';
+        passSpan.id = 'passSpan_' + item.id;
+        passSpan.textContent = '••••••••';
+        tdPass.appendChild(passSpan);
+
+        var tdActions = document.createElement('td');
+        var actionsDiv = document.createElement('div');
+        actionsDiv.className = 'table-actions';
+
+        // Reveal button
+        var revealBtn = document.createElement('button');
+        revealBtn.className = 'btn-icon';
+        revealBtn.title = 'Reveal / Mask Password';
+        revealBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+        (function(id, realPass) {
+          revealBtn.onclick = function() {
+            var el = document.getElementById('passSpan_' + id);
+            if (el) {
+              if (el.textContent === '••••••••') {
+                el.textContent = realPass;
+                el.style.letterSpacing = 'normal';
+              } else {
+                el.textContent = '••••••••';
+                el.style.letterSpacing = '2px';
+              }
+            }
+          };
+        })(item.id, item.pass);
+
+        // Delete button
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-icon danger';
+        deleteBtn.title = 'Delete saved password';
+        deleteBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+        (function(id) {
+          deleteBtn.onclick = function() {
+            deletePassword(id);
+          };
+        })(item.id);
+
+        actionsDiv.appendChild(revealBtn);
+        actionsDiv.appendChild(deleteBtn);
+        tdActions.appendChild(actionsDiv);
+
+        tr.appendChild(tdSite);
+        tr.appendChild(tdUser);
+        tr.appendChild(tdPass);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function deletePassword(id) {
+      var list = getPasswords().filter(function(p) { return p.id !== id; });
+      savePasswords(list);
+      showToast('Saved password deleted');
+    }
+
+    function openAddPasswordModal() {
+      document.getElementById('newPwSite').value = '';
+      document.getElementById('newPwUser').value = '';
+      document.getElementById('newPwPass').value = '';
+      openModal('addPasswordModal');
+    }
+
+    function saveNewPassword() {
+      var site = document.getElementById('newPwSite').value.trim();
+      var user = document.getElementById('newPwUser').value.trim();
+      var pass = document.getElementById('newPwPass').value;
+
+      if (!site || !pass) {
+        alert('Please specify at least a site and password.');
+        return;
+      }
+
+      var list = getPasswords();
+      list.push({
+        id: Date.now().toString(),
+        site: site,
+        user: user || 'Unknown',
+        pass: pass
+      });
+      savePasswords(list);
+      closeModal('addPasswordModal');
+      showToast('Password saved for ' + site);
+    }
+
+    function openMasterPasswordModal() {
+      document.getElementById('inputMasterPw').value = '';
+      document.getElementById('inputMasterPwConfirm').value = '';
+      openModal('masterPasswordModal');
+    }
+
+    function saveMasterPassword() {
+      var p1 = document.getElementById('inputMasterPw').value;
+      var p2 = document.getElementById('inputMasterPwConfirm').value;
+      if (!p1) {
+        alert('Master password cannot be empty.');
+        return;
+      }
+      if (p1 !== p2) {
+        alert('Passwords do not match. Please verify.');
+        return;
+      }
+      localStorage.setItem('lit_has_master_pw', '1');
+      updateMasterPasswordUI();
+      closeModal('masterPasswordModal');
+      showToast('Master password set successfully');
+    }
+
+    function updateMasterPasswordUI() {
+      var hasMaster = localStorage.getItem('lit_has_master_pw') === '1';
+      var statusEl = document.getElementById('masterPasswordStatus');
+      var btnEl = document.getElementById('btnMasterPassword');
+      if (hasMaster) {
+        if (statusEl) statusEl.textContent = 'Master password is active and protecting your credentials';
+        if (btnEl) btnEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Change Master Password';
+      }
+    }
+
+    // SECTION 5: Autofill (Personal Info, Addresses, Payment Methods)
+    var defaultPersonal = [
+      { id: '1', name: 'Rajat Sharma', email: 'rajat@example.com', phone: '+1 (555) 019-2834' }
+    ];
+
+    var defaultAddresses = [
+      { id: '1', street: '100 Silicon Way, Suite 400', city: 'San Jose', state: 'CA', zip: '95113', country: 'United States' }
+    ];
+
+    var defaultPayment = [
+      { id: '1', number: '•••• •••• •••• 4242', name: 'Rajat Sharma', exp: '10/28' }
+    ];
+
+    function switchAutofillTab(tabKey) {
+      var tabs = ['personal', 'addresses', 'payment'];
+      var buttons = document.querySelectorAll('.subtab-btn');
+      tabs.forEach(function(t, idx) {
+        var content = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (content) {
+          if (t === tabKey) {
+            content.classList.add('active');
+            if (buttons[idx]) buttons[idx].classList.add('active');
+          } else {
+            content.classList.remove('active');
+            if (buttons[idx]) buttons[idx].classList.remove('active');
+          }
+        }
+      });
+    }
+
+    // Personal Info
+    function getPersonalList() {
+      var stored = localStorage.getItem('lit_autofill_personal');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+      return defaultPersonal;
+    }
+
+    function savePersonalList(list) {
+      localStorage.setItem('lit_autofill_personal', JSON.stringify(list));
+      renderPersonalList();
+    }
+
+    function renderPersonalList() {
+      var list = getPersonalList();
+      var container = document.getElementById('personalList');
+      if (!container) return;
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">No personal information stored.</div>';
+        return;
+      }
+      container.innerHTML = '';
+      list.forEach(function(p) {
+        var card = document.createElement('div');
+        card.className = 'autofill-card';
+        card.innerHTML = '<div class="autofill-card-info">' +
+          '<strong>' + p.name + '</strong>' +
+          '<span>' + p.email + ' &bull; ' + p.phone + '</span>' +
+          '</div>' +
+          '<button class="btn-icon danger" title="Delete" onclick="deletePerson(\'' + p.id + '\')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+          '</button>';
+        container.appendChild(card);
+      });
+    }
+
+    function deletePerson(id) {
+      var list = getPersonalList().filter(function(p) { return p.id !== id; });
+      savePersonalList(list);
+      showToast('Personal info removed');
+    }
+
+    function openAddPersonalModal() {
+      document.getElementById('newPersonName').value = '';
+      document.getElementById('newPersonEmail').value = '';
+      document.getElementById('newPersonPhone').value = '';
+      openModal('addPersonalModal');
+    }
+
+    function saveNewPerson() {
+      var name = document.getElementById('newPersonName').value.trim();
+      var email = document.getElementById('newPersonEmail').value.trim();
+      var phone = document.getElementById('newPersonPhone').value.trim();
+      if (!name) {
+        alert('Please enter a name.');
+        return;
+      }
+      var list = getPersonalList();
+      list.push({ id: Date.now().toString(), name: name, email: email, phone: phone });
+      savePersonalList(list);
+      closeModal('addPersonalModal');
+      showToast('Personal info added');
+    }
+
+    // Addresses
+    function getAddressesList() {
+      var stored = localStorage.getItem('lit_autofill_addresses');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+      return defaultAddresses;
+    }
+
+    function saveAddressesList(list) {
+      localStorage.setItem('lit_autofill_addresses', JSON.stringify(list));
+      renderAddressesList();
+    }
+
+    function renderAddressesList() {
+      var list = getAddressesList();
+      var container = document.getElementById('addressesList');
+      if (!container) return;
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">No addresses stored.</div>';
+        return;
+      }
+      container.innerHTML = '';
+      list.forEach(function(a) {
+        var card = document.createElement('div');
+        card.className = 'autofill-card';
+        card.innerHTML = '<div class="autofill-card-info">' +
+          '<strong>' + a.street + '</strong>' +
+          '<span>' + a.city + ', ' + a.state + ' ' + a.zip + ' &bull; ' + a.country + '</span>' +
+          '</div>' +
+          '<button class="btn-icon danger" title="Delete" onclick="deleteAddress(\'' + a.id + '\')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+          '</button>';
+        container.appendChild(card);
+      });
+    }
+
+    function deleteAddress(id) {
+      var list = getAddressesList().filter(function(a) { return a.id !== id; });
+      saveAddressesList(list);
+      showToast('Address removed');
+    }
+
+    function openAddAddressModal() {
+      document.getElementById('newAddrStreet').value = '';
+      document.getElementById('newAddrCity').value = '';
+      document.getElementById('newAddrState').value = '';
+      document.getElementById('newAddrZip').value = '';
+      document.getElementById('newAddrCountry').value = '';
+      openModal('addAddressModal');
+    }
+
+    function saveNewAddress() {
+      var street = document.getElementById('newAddrStreet').value.trim();
+      var city = document.getElementById('newAddrCity').value.trim();
+      var state = document.getElementById('newAddrState').value.trim();
+      var zip = document.getElementById('newAddrZip').value.trim();
+      var country = document.getElementById('newAddrCountry').value.trim() || 'United States';
+
+      if (!street || !city) {
+        alert('Please fill out street and city.');
+        return;
+      }
+
+      var list = getAddressesList();
+      list.push({ id: Date.now().toString(), street: street, city: city, state: state, zip: zip, country: country });
+      saveAddressesList(list);
+      closeModal('addAddressModal');
+      showToast('Address added');
+    }
+
+    // Payment Methods
+    function getPaymentList() {
+      var stored = localStorage.getItem('lit_autofill_payment');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+      return defaultPayment;
+    }
+
+    function savePaymentList(list) {
+      localStorage.setItem('lit_autofill_payment', JSON.stringify(list));
+      renderPaymentList();
+    }
+
+    function renderPaymentList() {
+      var list = getPaymentList();
+      var container = document.getElementById('paymentList');
+      if (!container) return;
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">No payment methods stored.</div>';
+        return;
+      }
+      container.innerHTML = '';
+      list.forEach(function(c) {
+        var card = document.createElement('div');
+        card.className = 'autofill-card';
+        card.innerHTML = '<div class="autofill-card-info">' +
+          '<strong>' + c.number + '</strong>' +
+          '<span>' + c.name + ' &bull; Exp: ' + c.exp + '</span>' +
+          '</div>' +
+          '<button class="btn-icon danger" title="Delete" onclick="deletePayment(\'' + c.id + '\')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+          '</button>';
+        container.appendChild(card);
+      });
+    }
+
+    function deletePayment(id) {
+      var list = getPaymentList().filter(function(c) { return c.id !== id; });
+      savePaymentList(list);
+      showToast('Card removed');
+    }
+
+    function openAddPaymentModal() {
+      document.getElementById('newCardNum').value = '';
+      document.getElementById('newCardName').value = '';
+      document.getElementById('newCardExp').value = '';
+      document.getElementById('newCardCvv').value = '';
+      openModal('addPaymentModal');
+    }
+
+    function saveNewPayment() {
+      var rawNum = document.getElementById('newCardNum').value.trim();
+      var name = document.getElementById('newCardName').value.trim();
+      var exp = document.getElementById('newCardExp').value.trim();
+
+      if (!rawNum) {
+        alert('Please enter a card number.');
+        return;
+      }
+
+      var last4 = rawNum.slice(-4) || '0000';
+      var masked = '•••• •••• •••• ' + last4;
+
+      var list = getPaymentList();
+      list.push({ id: Date.now().toString(), number: masked, name: name || 'Cardholder', exp: exp || '12/28' });
+      savePaymentList(list);
+      closeModal('addPaymentModal');
+      showToast('Payment card added securely');
+    }
+
+    // SECTION 6: Updates
+    function checkUpdates() {
+      var btn = document.getElementById('btnCheckUpdates');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg> Checking...';
+      }
+      setTimeout(function() {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Up to date';
+        }
+        showToast('Lit Browser v1.0.0 is the latest release');
+      }, 1200);
+    }
+
+    // Initialize all sections on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      loadGeneralSettings();
+      loadTheme();
+      loadPrivacySettings();
+      updateMasterPasswordUI();
+      renderPasswordsTable();
+      renderPersonalList();
+      renderAddressesList();
+      renderPaymentList();
+
+      // Dispatch event to announce settings bridge readiness
+      window.dispatchEvent(new CustomEvent('litSettingsReady'));
+    });
+  </script>
+</body>
+</html>

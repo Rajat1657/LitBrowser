@@ -86,6 +86,20 @@ The resulting installer will be generated in the `dist/` directory.
 
 ---
 
+## 📦 Standalone Updater (`LitUpdater.exe`)
+
+Lit Browser comes with a dedicated native updater utility:
+
+- **File**: `LitUpdater.exe`
+- **Features**:
+  - Safely detects and closes running instances of Lit Browser.
+  - Automatically updates the installed files in `%LOCALAPPDATA%\Programs\LitBrowser`.
+  - Refreshes Desktop and Start Menu shortcuts.
+  - Automatically relaunches Lit Browser with the latest build.
+  - Supports silent background execution: `LitUpdater.exe /silent`
+
+---
+
 ## 🛠️ Tech Architecture
 
 - **Runtime**: Electron 33 (Chromium + Node.js)

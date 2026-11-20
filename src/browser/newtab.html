@@ -13,8 +13,8 @@
     }
 
     body {
-      background-color: #07080c;
-      color: #f1f3f9;
+      background-color: #000000;
+      color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       width: 100vw;
@@ -27,34 +27,23 @@
       user-select: none;
     }
 
-    /* Ambient Mesh Glows */
-    .ambient-glow-1 {
+    /* Ambient Subtle Wireframe Circle */
+    .ambient-circle {
       position: absolute;
-      top: -150px;
-      left: 30%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, transparent 70%);
-      filter: blur(60px);
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.04);
       pointer-events: none;
-      animation: pulseGlow 8s infinite alternate ease-in-out;
     }
 
-    .ambient-glow-2 {
+    .ambient-circle-inner {
       position: absolute;
-      bottom: -150px;
-      right: 25%;
-      width: 450px;
-      height: 450px;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
-      filter: blur(60px);
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.03);
       pointer-events: none;
-      animation: pulseGlow 10s infinite alternate-reverse ease-in-out;
-    }
-
-    @keyframes pulseGlow {
-      0% { transform: scale(1) translate(0, 0); opacity: 0.6; }
-      100% { transform: scale(1.15) translate(20px, 20px); opacity: 0.9; }
     }
 
     .container {
@@ -64,92 +53,111 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      max-width: 680px;
-      padding: 0 24px;
-      margin-top: -30px;
-      animation: heroIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      max-width: 640px;
+      padding: 0 20px;
+      margin-top: -20px;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    @keyframes heroIn {
-      from { opacity: 0; transform: translateY(16px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Live Clock */
+    /* Minimal Technical Clock */
+    .clock-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 2px;
+    }
+
     .clock-display {
-      font-size: 54px;
+      font-size: 56px;
       font-weight: 200;
-      letter-spacing: -1.5px;
+      letter-spacing: -2px;
       color: #ffffff;
-      margin-bottom: 4px;
-      text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+    }
+
+    .seconds-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #eb0029;
+      box-shadow: 0 0 8px rgba(235, 0, 41, 0.6);
+      animation: blink 1s infinite alternate;
+    }
+
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      100% { opacity: 1; }
     }
 
     .date-display {
-      font-size: 13px;
-      font-weight: 500;
-      color: #8b92a8;
-      margin-bottom: 24px;
-      letter-spacing: 0.2px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #666666;
+      letter-spacing: 1px;
       text-transform: uppercase;
+      margin-bottom: 26px;
     }
 
-    /* Brand Logo Pill */
+    /* Brand Header: Nothing Industrial Style */
     .brand-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 24px;
     }
 
-    .brand-icon {
-      width: 24px;
-      height: 24px;
-      filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.6));
-    }
-
-    .brand-title {
-      font-size: 26px;
+    .brand-tag {
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 50%, #818cf8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #111111;
     }
 
-    /* Floating Spotlight Search Bar */
+    .brand-sub {
+      font-size: 11px;
+      color: #666666;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    /* Nothing Capsule Search Bar */
     .search-capsule {
       width: 100%;
-      height: 54px;
+      height: 48px;
       border-radius: 9999px;
-      background: rgba(22, 25, 38, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(24px);
+      background: #111111;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       display: flex;
       align-items: center;
-      padding: 0 10px 0 20px;
+      padding: 0 8px 0 18px;
       gap: 12px;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .search-capsule:hover {
-      border-color: rgba(255, 255, 255, 0.18);
-      background: rgba(26, 30, 46, 0.85);
-      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55);
+      border-color: rgba(255, 255, 255, 0.25);
+      background: #141414;
     }
 
     .search-capsule:focus-within {
-      border-color: #6366f1;
-      background: rgba(24, 28, 44, 0.95);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 20px 48px rgba(0, 0, 0, 0.6);
-      transform: translateY(-1px);
+      border-color: #ffffff;
+      background: #161616;
+      box-shadow: 0 0 0 1px #ffffff, 0 12px 32px rgba(0, 0, 0, 0.7);
     }
 
     .search-icon {
-      width: 18px;
-      height: 18px;
-      color: #6366f1;
+      width: 16px;
+      height: 16px;
+      color: #666666;
       flex-shrink: 0;
     }
 
@@ -160,38 +168,37 @@
       background: transparent;
       outline: none;
       color: #ffffff;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 450;
-      letter-spacing: -0.2px;
+      letter-spacing: -0.1px;
     }
 
     .search-input::placeholder {
-      color: #646b82;
-      font-weight: 400;
+      color: #555555;
     }
 
     .search-btn {
-      width: 38px;
-      height: 38px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      background: #ffffff;
       border: none;
-      color: #ffffff;
+      color: #000000;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
-      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.15s;
       flex-shrink: 0;
     }
 
     .search-btn:hover {
-      transform: scale(1.08);
+      background: #e0e0e0;
+      transform: scale(1.05);
     }
 
     .search-btn:active {
-      transform: scale(0.94);
+      transform: scale(0.95);
     }
 
     /* Engine Selector Pills */
@@ -199,180 +206,165 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-top: 14px;
-      margin-bottom: 34px;
+      margin-top: 12px;
+      margin-bottom: 30px;
     }
 
     .engine-pill {
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 9999px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      color: #8b92a8;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #666666;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       cursor: pointer;
-      transition: all 0.18s;
+      transition: all 0.15s;
     }
 
     .engine-pill:hover {
-      background: rgba(255, 255, 255, 0.09);
       color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     .engine-pill.active {
-      background: rgba(99, 102, 241, 0.18);
-      border-color: rgba(99, 102, 241, 0.4);
-      color: #818cf8;
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
     }
 
-    /* Shortcuts Grid */
+    /* Shortcuts Grid: Nothing Capsule Style */
     .shortcuts-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
+      gap: 10px;
       width: 100%;
     }
 
     .shortcut-card {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 14px 10px;
-      border-radius: 16px;
-      background: rgba(22, 25, 38, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 9999px;
+      background: #0d0d0d;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       cursor: pointer;
       text-decoration: none;
-      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                  background 0.2s,
-                  border-color 0.2s,
-                  box-shadow 0.2s;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .shortcut-card:hover {
-      background: rgba(30, 35, 54, 0.85);
-      border-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-4px) scale(1.02);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+      background: #181818;
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
     }
 
-    .shortcut-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    .shortcut-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #333333;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .shortcut-card:hover .shortcut-dot {
+      background: #eb0029;
+      box-shadow: 0 0 6px rgba(235, 0, 41, 0.6);
     }
 
     .shortcut-name {
       font-size: 11px;
       font-weight: 550;
-      color: #c0c6d8;
-      letter-spacing: -0.1px;
+      letter-spacing: 0.2px;
+      color: #888888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .shortcut-card:hover .shortcut-name {
       color: #ffffff;
     }
-
-    /* Custom Icon Box Colors */
-    .icon-google { background: linear-gradient(135deg, #4285f4, #34a853); }
-    .icon-youtube { background: linear-gradient(135deg, #ff0000, #c4302b); }
-    .icon-github { background: linear-gradient(135deg, #24292e, #181717); border: 1px solid rgba(255, 255, 255, 0.15); }
-    .icon-reddit { background: linear-gradient(135deg, #ff4500, #ff5722); }
-    .icon-twitter { background: linear-gradient(135deg, #1da1f2, #0d8ddb); }
-    .icon-wiki { background: linear-gradient(135deg, #636466, #333333); }
-    .icon-stackoverflow { background: linear-gradient(135deg, #f48024, #da670b); }
-    .icon-gmail { background: linear-gradient(135deg, #ea4335, #bb0014); }
   </style>
 </head>
 <body>
 
-  <div class="ambient-glow-1"></div>
-  <div class="ambient-glow-2"></div>
+  <div class="ambient-circle"></div>
+  <div class="ambient-circle-inner"></div>
 
   <div class="container">
     <!-- Clock & Date -->
-    <div class="clock-display" id="live-clock">12:00</div>
+    <div class="clock-row">
+      <div class="clock-display" id="live-clock">12:00</div>
+      <div class="seconds-dot"></div>
+    </div>
     <div class="date-display" id="live-date">Friday, November 20</div>
 
-    <!-- Brand -->
+    <!-- Brand Tag -->
     <div class="brand-wrap">
-      <svg class="brand-icon" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C10.5 5 7 8 7 12a5 5 0 0 0 10 0c0-2-1-4-2-5.5-.5 2-2 3-3 3-1 0-1.5-1-1-2.5 1-3 1.5-4 1-5z" fill="url(#brand-flame)"/>
-        <defs>
-          <linearGradient id="brand-flame" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#a855f7"/>
-            <stop offset="50%" stop-color="#6366f1"/>
-            <stop offset="100%" stop-color="#f97316"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <span class="brand-title">Lit Browser</span>
+      <span class="brand-tag">LIT // (01)</span>
+      <span class="brand-sub">PURE PERFORMANCE</span>
     </div>
 
-    <!-- Search Capsule -->
+    <!-- Search Capsule (Defaults to Google) -->
     <form class="search-capsule" id="search-form">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-      <input type="text" id="search-input" class="search-input" placeholder="Search the web or type a URL..." autofocus autocomplete="off" spellcheck="false" />
+      <input type="text" id="search-input" class="search-input" placeholder="Search Google or enter address..." autofocus autocomplete="off" spellcheck="false" />
       <button type="submit" class="search-btn" title="Search">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </button>
     </form>
 
-    <!-- Engine Pills -->
+    <!-- Engine Pills (Google Active by Default) -->
     <div class="engine-pills">
-      <button type="button" class="engine-pill active" data-engine="duckduckgo">DuckDuckGo</button>
-      <button type="button" class="engine-pill" data-engine="google">Google</button>
+      <button type="button" class="engine-pill active" data-engine="google">Google</button>
       <button type="button" class="engine-pill" data-engine="youtube">YouTube</button>
       <button type="button" class="engine-pill" data-engine="github">GitHub</button>
       <button type="button" class="engine-pill" data-engine="reddit">Reddit</button>
+      <button type="button" class="engine-pill" data-engine="duckduckgo">DuckDuckGo</button>
     </div>
 
-    <!-- Shortcuts Grid -->
+    <!-- Shortcuts Grid: Nothing Capsule Style -->
     <div class="shortcuts-grid">
       <a class="shortcut-card" href="https://www.google.com">
-        <div class="shortcut-icon-box icon-google">G</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">Google</span>
       </a>
       <a class="shortcut-card" href="https://www.youtube.com">
-        <div class="shortcut-icon-box icon-youtube">▶</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">YouTube</span>
       </a>
       <a class="shortcut-card" href="https://github.com">
-        <div class="shortcut-icon-box icon-github">GH</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">GitHub</span>
       </a>
       <a class="shortcut-card" href="https://www.reddit.com">
-        <div class="shortcut-icon-box icon-reddit">R</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">Reddit</span>
       </a>
       <a class="shortcut-card" href="https://x.com">
-        <div class="shortcut-icon-box icon-twitter">𝕏</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">X</span>
       </a>
       <a class="shortcut-card" href="https://www.wikipedia.org">
-        <div class="shortcut-icon-box icon-wiki">W</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">Wikipedia</span>
       </a>
       <a class="shortcut-card" href="https://stackoverflow.com">
-        <div class="shortcut-icon-box icon-stackoverflow">SO</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">Stack Overflow</span>
       </a>
       <a class="shortcut-card" href="https://mail.google.com">
-        <div class="shortcut-icon-box icon-gmail">M</div>
+        <div class="shortcut-dot"></div>
         <span class="shortcut-name">Gmail</span>
       </a>
     </div>
@@ -392,14 +384,14 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Search Engine Selection
-    let currentEngine = 'duckduckgo';
+    // Search Engine Selection (Default: Google)
+    let currentEngine = 'google';
     const engineUrls = {
-      duckduckgo: 'https://duckduckgo.com/?q=',
       google: 'https://www.google.com/search?q=',
       youtube: 'https://www.youtube.com/results?search_query=',
       github: 'https://github.com/search?q=',
-      reddit: 'https://www.reddit.com/search/?q='
+      reddit: 'https://www.reddit.com/search/?q=',
+      duckduckgo: 'https://duckduckgo.com/?q='
     };
 
     document.querySelectorAll('.engine-pill').forEach(pill => {
@@ -407,6 +399,7 @@
         document.querySelectorAll('.engine-pill').forEach(p => p.classList.remove('active'));
         pill.classList.add('active');
         currentEngine = pill.dataset.engine;
+        document.getElementById('search-input').placeholder = `Search ${pill.textContent} or enter address...`;
         document.getElementById('search-input').focus();
       });
     });
@@ -422,7 +415,7 @@
       } else if (/^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/.*)?$/.test(query)) {
         window.location.href = 'https://' + query;
       } else {
-        const base = engineUrls[currentEngine] || engineUrls.duckduckgo;
+        const base = engineUrls[currentEngine] || engineUrls.google;
         window.location.href = base + encodeURIComponent(query);
       }
     });

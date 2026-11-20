@@ -14,17 +14,10 @@ function addListener(primaryChannel, secondaryChannel, callback) {
     return () => {};
   }
   const handler = (_event, data) => callback(data);
-
   ipcRenderer.on(primaryChannel, handler);
-  if (secondaryChannel && secondaryChannel !== primaryChannel) {
-    ipcRenderer.on(secondaryChannel, handler);
-  }
 
   return () => {
     ipcRenderer.removeListener(primaryChannel, handler);
-    if (secondaryChannel && secondaryChannel !== primaryChannel) {
-      ipcRenderer.removeListener(secondaryChannel, handler);
-    }
   };
 }
 

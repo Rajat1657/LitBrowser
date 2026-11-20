@@ -759,8 +759,8 @@
                 <div class="setting-sublabel">Engine used when searching from address bar and new tab</div>
               </div>
               <select class="lit-select" id="searchEngineSelect" onchange="saveGeneralSettings()">
+                <option value="google" selected>Google</option>
                 <option value="duckduckgo">DuckDuckGo</option>
-                <option value="google">Google</option>
                 <option value="bing">Bing</option>
                 <option value="ecosia">Ecosia</option>
                 <option value="brave">Brave Search</option>
@@ -1328,7 +1328,7 @@
     }
 
     function loadGeneralSettings() {
-      var engine = localStorage.getItem('lit_search_engine') || 'duckduckgo';
+      var engine = localStorage.getItem('lit_search_engine') || 'google';
       var homepage = localStorage.getItem('lit_homepage') || 'lit://newtab';
       var engineSelect = document.getElementById('searchEngineSelect');
       var hpInput = document.getElementById('homepageInput');

@@ -138,8 +138,8 @@
     downloads: new Map(), // id -> downloadItem
     vaultLocked: true,
     settings: {
-      searchEngine: 'duckduckgo',
-      homepage: 'https://duckduckgo.com',
+      searchEngine: 'google',
+      homepage: 'lit://newtab',
       adBlocker: true,
       theme: 'dark'
     }
@@ -1447,6 +1447,13 @@
     const container = document.getElementById('tabs-container');
     if (!container) return null;
 
+    // Prevent duplicate tab elements for the same tab ID
+    let existing = container.querySelector(`.tab[data-tab-id="${tabData.id}"]`);
+    if (existing) {
+      updateTabElement(tabData.id, tabData);
+      return existing;
+    }
+
     const tab = document.createElement('div');
     tab.className = 'tab tab-opening';
     tab.setAttribute('data-tab-id', tabData.id);
@@ -1537,13 +1544,21 @@
   function setActiveTab(tabId) {
     state.activeTabId = tabId;
 
-    // Update active class on all tabs
-    for (const [id, tab] of state.tabs.entries()) {
-      if (id === tabId) {
-        tab.element.classList.add('active');
-        tab.element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    // Synchronize active class across all tabs in DOM
+    const allTabEls = document.querySelectorAll('#tabs-container .tab');
+    allTabEls.forEach(el => {
+      if (el.getAttribute('data-tab-id') === tabId) {
+        el.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
       } else {
-        tab.element.classList.remove('active');
+        el.classList.remove('active');
+      }
+    });
+
+    for (const [id, tab] of state.tabs.entries()) {
+      if (tab.element) {
+        if (id === tabId) tab.element.classList.add('active');
+        else tab.element.classList.remove('active');
       }
     }
 
@@ -1626,13 +1641,13 @@
     } else if (rawInput.includes('.') && !/\s/.test(rawInput)) {
       targetUrl = 'https://' + rawInput;
     } else {
-      const engine = state.settings.searchEngine || 'duckduckgo';
-      if (engine === 'google') {
-        targetUrl = `https://www.google.com/search?q=${encodeURIComponent(rawInput)}`;
+      const engine = state.settings.searchEngine || 'google';
+      if (engine === 'duckduckgo') {
+        targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(rawInput)}`;
       } else if (engine === 'bing') {
         targetUrl = `https://www.bing.com/search?q=${encodeURIComponent(rawInput)}`;
       } else {
-        targetUrl = `https://duckduckgo.com/?q=${encodeURIComponent(rawInput)}`;
+        targetUrl = `https://www.google.com/search?q=${encodeURIComponent(rawInput)}`;
       }
     }
 

@@ -91,7 +91,7 @@ let pendingPasswordEntry = null;
 // Settings Management
 const DEFAULT_SETTINGS = {
   theme: 'dark',
-  searchEngine: 'duckduckgo',
+  searchEngine: 'google',
   adBlocker: true,
   homePage: 'lit://newtab'
 };
@@ -232,7 +232,7 @@ if (!gotTheLock) {
 // -------------------------------------------------------------
 // Helper: URL formatting
 // -------------------------------------------------------------
-function formatUrl(input, searchEngine = 'duckduckgo') {
+function formatUrl(input, searchEngine = 'google') {
   if (!input) return settings.homePage || 'lit://newtab';
   input = input.trim();
 
@@ -255,14 +255,14 @@ function formatUrl(input, searchEngine = 'duckduckgo') {
 
   // Otherwise treat as search engine query
   const query = encodeURIComponent(input);
-  switch ((searchEngine || 'duckduckgo').toLowerCase()) {
-    case 'google':
-      return `https://www.google.com/search?q=${query}`;
+  switch ((searchEngine || 'google').toLowerCase()) {
+    case 'duckduckgo':
+      return `https://duckduckgo.com/?q=${query}`;
     case 'bing':
       return `https://www.bing.com/search?q=${query}`;
-    case 'duckduckgo':
+    case 'google':
     default:
-      return `https://duckduckgo.com/?q=${query}`;
+      return `https://www.google.com/search?q=${query}`;
   }
 }
 
@@ -272,21 +272,12 @@ function formatUrl(input, searchEngine = 'duckduckgo') {
 function emitToRenderer(channels, ...args) {
   if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents) return;
   const channelList = Array.isArray(channels) ? channels : [channels];
-  const toSend = new Set();
-  for (const ch of channelList) {
-    toSend.add(ch);
-    toSend.add(`lit:${ch}`);
-    toSend.add(`lit:on-${ch}`);
-    const kebab = ch.replace(/([A-Z])/g, '-$1').toLowerCase();
-    toSend.add(kebab);
-    toSend.add(`lit:${kebab}`);
-    toSend.add(`lit:on-${kebab}`);
-  }
-  for (const targetCh of toSend) {
-    try {
-      mainWindow.webContents.send(targetCh, ...args);
-    } catch (e) {}
-  }
+  const primary = channelList[0];
+  const kebab = primary.replace(/([A-Z])/g, '-$1').toLowerCase();
+  
+  try {
+    mainWindow.webContents.send(`lit:${kebab}`, ...args);
+  } catch (e) {}
 }
 
 // -------------------------------------------------------------
@@ -381,23 +372,45 @@ function createTab(initialUrl) {
   return tabId;
 }
 
+const recentlyClosedTabs = [];
+
+function reopenClosedTab() {
+  if (recentlyClosedTabs.length > 0) {
+    const url = recentlyClosedTabs.pop();
+    safeCreateTab(url);
+  }
+}
+
+function switchTabByIndex(index) {
+  const tabIds = Array.from(tabs.keys());
+  if (tabIds.length === 0) return;
+  if (index >= tabIds.length) index = tabIds.length - 1;
+  if (index < 0) index = 0;
+  switchTab(tabIds[index]);
+}
+
 function switchTab(tabId) {
   if (!tabs.has(tabId)) return;
   activeTabId = tabId;
-  updateTabBounds();
 
   const activeTab = tabs.get(tabId);
   if (activeTab && activeTab.view && !activeTab.view.webContents.isDestroyed()) {
+    try {
+      mainWindow.contentView.addChildView(activeTab.view);
+    } catch (e) {}
+    updateTabBounds();
     activeTab.view.webContents.focus();
     updateNavState(activeTab);
     emitTabUpdated(tabId);
-    emitToRenderer(['blocked-count-updated', 'blockedCountUpdated', 'onBlockedCountUpdated'], {
+    emitToRenderer(['blocked-count-updated'], {
       tabId: tabId,
       count: activeTab.blockedCount || 0
     });
+  } else {
+    updateTabBounds();
   }
 
-  emitToRenderer(['active-tab-changed', 'activeTabChanged', 'onActiveTabChanged'], tabId);
+  emitToRenderer(['active-tab-changed'], tabId);
 }
 
 let lastTabCreateTime = 0;
@@ -439,6 +452,11 @@ function safeCloseTab(tabId) {
 function closeTab(tabId) {
   if (!tabs.has(tabId)) return;
   const tab = tabs.get(tabId);
+
+  if (tab.url && tab.url !== 'lit://newtab' && !tab.url.startsWith('about:')) {
+    recentlyClosedTabs.push(tab.url);
+    if (recentlyClosedTabs.length > 30) recentlyClosedTabs.shift();
+  }
 
   const tabIds = Array.from(tabs.keys());
   const currentIndex = tabIds.indexOf(tabId);
@@ -712,6 +730,9 @@ function setupTabWebContents(tab) {
     if (ctrl && !shift && !alt && key === 't') {
       event.preventDefault();
       safeCreateTab();
+    } else if (ctrl && shift && !alt && key === 't') {
+      event.preventDefault();
+      reopenClosedTab();
     } else if (ctrl && !shift && !alt && key === 'w') {
       event.preventDefault();
       safeCloseTab(tab.id);
@@ -721,15 +742,42 @@ function setupTabWebContents(tab) {
     } else if (ctrl && shift && !alt && key === 'tab') {
       event.preventDefault();
       switchPrevTab();
+    } else if (ctrl && !shift && !alt && key >= '1' && key <= '8') {
+      event.preventDefault();
+      switchTabByIndex(parseInt(key, 10) - 1);
+    } else if (ctrl && !shift && !alt && key === '9') {
+      event.preventDefault();
+      switchTabByIndex(999);
+    } else if (ctrl && !shift && !alt && (key === 'l' || key === 'd') && alt) {
+      event.preventDefault();
+      emitToRenderer(['focus-url-bar', 'focusUrlBar']);
     } else if (ctrl && !shift && !alt && key === 'l') {
       event.preventDefault();
       emitToRenderer(['focus-url-bar', 'focusUrlBar']);
+    } else if (ctrl && shift && (key === 'r' || input.key === 'F5')) {
+      event.preventDefault();
+      wc.reloadIgnoringCache();
     } else if ((ctrl && !shift && !alt && key === 'r') || input.key === 'F5') {
       event.preventDefault();
       wc.reload();
     } else if (ctrl && !shift && !alt && key === 'f') {
       event.preventDefault();
       emitToRenderer(['open-find', 'find-in-page', 'findInPage']);
+    } else if (ctrl && !shift && !alt && key === 'j') {
+      event.preventDefault();
+      emitToRenderer(['toggle-downloads', 'open-downloads']);
+    } else if (ctrl && (key === '=' || key === '+')) {
+      event.preventDefault();
+      wc.setZoomLevel(wc.getZoomLevel() + 0.5);
+    } else if (ctrl && key === '-') {
+      event.preventDefault();
+      wc.setZoomLevel(wc.getZoomLevel() - 0.5);
+    } else if (ctrl && key === '0') {
+      event.preventDefault();
+      wc.setZoomLevel(0);
+    } else if (ctrl && !shift && !alt && key === 'p') {
+      event.preventDefault();
+      wc.print();
     } else if (alt && !ctrl && !shift && input.key === 'ArrowLeft') {
       event.preventDefault();
       if (wc.navigationHistory ? wc.navigationHistory.canGoBack() : wc.canGoBack()) {
@@ -783,10 +831,23 @@ function setupApplicationMenu() {
           click: () => safeCreateTab()
         },
         {
+          label: 'Reopen Closed Tab',
+          accelerator: 'CmdOrCtrl+Shift+T',
+          click: () => reopenClosedTab()
+        },
+        {
           label: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
           click: () => {
             if (activeTabId) safeCloseTab(activeTabId);
+          }
+        },
+        {
+          label: 'Print',
+          accelerator: 'CmdOrCtrl+P',
+          click: () => {
+            const activeTab = tabs.get(activeTabId);
+            if (activeTab && activeTab.view) activeTab.view.webContents.print();
           }
         },
         { type: 'separator' },
@@ -825,15 +886,38 @@ function setupApplicationMenu() {
           }
         },
         {
-          label: 'Reload (F5)',
-          accelerator: 'F5',
-          visible: false,
-          acceleratorWorksWhenHidden: true,
+          label: 'Hard Reload',
+          accelerator: 'CmdOrCtrl+Shift+R',
           click: () => {
             const activeTab = tabs.get(activeTabId);
-            if (activeTab && activeTab.view) activeTab.view.webContents.reload();
+            if (activeTab && activeTab.view) activeTab.view.webContents.reloadIgnoringCache();
           }
         },
+        {
+          label: 'Zoom In',
+          accelerator: 'CmdOrCtrl+Plus',
+          click: () => {
+            const activeTab = tabs.get(activeTabId);
+            if (activeTab && activeTab.view) activeTab.view.webContents.setZoomLevel(activeTab.view.webContents.getZoomLevel() + 0.5);
+          }
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CmdOrCtrl+-',
+          click: () => {
+            const activeTab = tabs.get(activeTabId);
+            if (activeTab && activeTab.view) activeTab.view.webContents.setZoomLevel(activeTab.view.webContents.getZoomLevel() - 0.5);
+          }
+        },
+        {
+          label: 'Reset Zoom',
+          accelerator: 'CmdOrCtrl+0',
+          click: () => {
+            const activeTab = tabs.get(activeTabId);
+            if (activeTab && activeTab.view) activeTab.view.webContents.setZoomLevel(0);
+          }
+        },
+        { type: 'separator' },
         {
           label: 'Toggle Fullscreen',
           accelerator: 'F11',
@@ -899,6 +983,58 @@ function setupApplicationMenu() {
           label: 'Previous Tab',
           accelerator: 'Ctrl+Shift+Tab',
           click: () => switchPrevTab()
+        },
+        {
+          label: 'Tab 1',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => switchTabByIndex(0)
+        },
+        {
+          label: 'Tab 2',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => switchTabByIndex(1)
+        },
+        {
+          label: 'Tab 3',
+          accelerator: 'CmdOrCtrl+3',
+          click: () => switchTabByIndex(2)
+        },
+        {
+          label: 'Tab 4',
+          accelerator: 'CmdOrCtrl+4',
+          click: () => switchTabByIndex(3)
+        },
+        {
+          label: 'Tab 5',
+          accelerator: 'CmdOrCtrl+5',
+          click: () => switchTabByIndex(4)
+        },
+        {
+          label: 'Tab 6',
+          accelerator: 'CmdOrCtrl+6',
+          click: () => switchTabByIndex(5)
+        },
+        {
+          label: 'Tab 7',
+          accelerator: 'CmdOrCtrl+7',
+          click: () => switchTabByIndex(6)
+        },
+        {
+          label: 'Tab 8',
+          accelerator: 'CmdOrCtrl+8',
+          click: () => switchTabByIndex(7)
+        },
+        {
+          label: 'Last Tab',
+          accelerator: 'CmdOrCtrl+9',
+          click: () => switchTabByIndex(999)
+        },
+        {
+          label: 'Downloads',
+          accelerator: 'CmdOrCtrl+J',
+          click: () => {
+            emitToRenderer(['toggle-downloads', 'open-downloads']);
+          }
         },
         {
           label: 'Focus Address Bar',

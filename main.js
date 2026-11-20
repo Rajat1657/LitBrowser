@@ -18,6 +18,35 @@ const fs = require('fs');
 const { pathToFileURL } = require('url');
 
 // -------------------------------------------------------------
+// Chromium Ultra-Low RAM & Performance Engine Switches
+// -------------------------------------------------------------
+// 1. Process limits & consolidation: Consolidate web renderers into minimal processes
+app.commandLine.appendSwitch('renderer-process-limit', '2');
+app.commandLine.appendSwitch('enable-features', 'NetworkServiceInProcess');
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+
+// 2. V8 memory bounding & expose gc for active heap trimming
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=128 --expose-gc');
+
+// 3. Trim heavy background chromium daemons & features
+app.commandLine.appendSwitch('disable-background-networking');
+app.commandLine.appendSwitch('disable-client-side-phishing-detection');
+app.commandLine.appendSwitch('disable-default-apps');
+app.commandLine.appendSwitch('disable-breakpad');
+app.commandLine.appendSwitch('disable-component-update');
+app.commandLine.appendSwitch('disable-domain-reliability');
+app.commandLine.appendSwitch('disable-sync');
+app.commandLine.appendSwitch('disable-extensions');
+app.commandLine.appendSwitch('disable-logging');
+app.commandLine.appendSwitch('no-pings');
+app.commandLine.appendSwitch('disable-features', 'Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,CalculateNativeWinOcclusion,CertificateTransparencyComponentUpdater');
+
+// 4. Memory & Disk cache bounding
+app.commandLine.appendSwitch('disk-cache-size', '16777216');
+app.commandLine.appendSwitch('media-cache-size', '16777216');
+app.commandLine.appendSwitch('v8-cache-options', 'code');
+
+// -------------------------------------------------------------
 // Module Loader Helper (Supports both Class and Object exports)
 // -------------------------------------------------------------
 function getModuleInstance(mod, arg) {
@@ -391,11 +420,28 @@ function switchTabByIndex(index) {
 
 function switchTab(tabId) {
   if (!tabs.has(tabId)) return;
+  const previousTabId = activeTabId;
   activeTabId = tabId;
+
+  // Background previous tab to save memory & GPU
+  if (previousTabId && previousTabId !== tabId && tabs.has(previousTabId)) {
+    const prevTab = tabs.get(previousTabId);
+    if (prevTab && prevTab.view && !prevTab.view.webContents.isDestroyed()) {
+      try {
+        prevTab.view.webContents.setBackgroundThrottling(true);
+        if (typeof prevTab.view.webContents.stopPainting === 'function') {
+          prevTab.view.webContents.stopPainting();
+        }
+      } catch (e) {}
+    }
+  }
 
   const activeTab = tabs.get(tabId);
   if (activeTab && activeTab.view && !activeTab.view.webContents.isDestroyed()) {
     try {
+      if (typeof activeTab.view.webContents.startPainting === 'function') {
+        activeTab.view.webContents.startPainting();
+      }
       mainWindow.contentView.addChildView(activeTab.view);
     } catch (e) {}
     updateTabBounds();
@@ -477,11 +523,20 @@ function closeTab(tabId) {
   } catch (e) {}
 
   try {
+    if (typeof tab.view.webContents.stopPainting === 'function') {
+      tab.view.webContents.stopPainting();
+    }
     tab.view.webContents.close();
+    tab.view.webContents.destroy();
   } catch (e) {}
 
   tabs.delete(tabId);
   emitToRenderer(['tab-removed', 'tabRemoved', 'onTabRemoved'], tabId);
+
+  // Immediate V8 garbage collection to reclaim memory
+  if (global.gc) {
+    try { global.gc(); } catch (e) {}
+  }
 
   if (tabs.size === 0) {
     createTab(settings.homePage || 'lit://newtab');
@@ -511,6 +566,7 @@ function switchPrevTab() {
 // -------------------------------------------------------------
 function setupTabWebContents(tab) {
   const wc = tab.view.webContents;
+  wc.setBackgroundThrottling(true);
 
   // Window open / new window handling
   wc.setWindowOpenHandler(({ url }) => {
@@ -1513,10 +1569,14 @@ function registerAllIpcHandlers() {
   });
 
   registerIpcAction(['showInFolder', 'show-in-folder', 'downloads:showInFolder'], (filePath) => {
-    if (downloads && typeof downloads.showInFolder === 'function') {
-      downloads.showInFolder(filePath);
-    } else if (filePath && fs.existsSync(filePath)) {
-      shell.showItemInFolder(filePath);
+    if (filePath && fs.existsSync(filePath)) {
+      if (downloads && typeof downloads.showInFolder === 'function') {
+        downloads.showInFolder(filePath);
+      } else {
+        shell.showItemInFolder(filePath);
+      }
+    } else {
+      shell.openPath(app.getPath('downloads'));
     }
   });
 
@@ -1808,3 +1868,10 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+// Periodic memory optimization and V8 compaction
+setInterval(() => {
+  if (global.gc) {
+    try { global.gc(); } catch (e) {}
+  }
+}, 60000);

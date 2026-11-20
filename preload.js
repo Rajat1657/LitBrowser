@@ -133,5 +133,19 @@ contextBridge.exposeInMainWorld('lit', {
   findInPage: (text, options) => ipcRenderer.send('lit:find-in-page', text, options),
   stopFindInPage: () => ipcRenderer.send('lit:stop-find-in-page'),
   onFindResults: (callback) =>
-    addListener('lit:find-results', 'lit:on-find-results', callback)
+    addListener('lit:find-results', 'lit:on-find-results', callback),
+
+  // ==========================================
+  // Shortcut & Command Events from Main
+  // ==========================================
+  onToggleDownloads: (callback) =>
+    addListener('lit:toggle-downloads', callback),
+  onOpenFind: (callback) =>
+    addListener('lit:open-find', callback),
+  onToggleHistory: (callback) =>
+    addListener('lit:open-history', callback),
+  onPromptBookmark: (callback) =>
+    addListener('lit:prompt-bookmark', callback),
+  onFocusUrlBar: (callback) =>
+    addListener('lit:focus-url-bar', callback)
 });

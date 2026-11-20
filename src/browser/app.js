@@ -1863,7 +1863,10 @@
     const backdrop = document.getElementById('panel-backdrop');
 
     if (panel) panel.classList.add('open');
-    if (backdrop) backdrop.classList.add('active');
+    if (backdrop) {
+      backdrop.classList.add('active');
+      backdrop.classList.add('visible');
+    }
 
     if (panelName === 'bookmarks') {
       renderBookmarksList();
@@ -1878,13 +1881,17 @@
 
   function closePanels() {
     activePanel = null;
-    document.querySelectorAll('.side-panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.side-glass-panel, .side-panel').forEach(p => p.classList.remove('open'));
     const backdrop = document.getElementById('panel-backdrop');
-    if (backdrop) backdrop.classList.remove('active');
+    if (backdrop) {
+      backdrop.classList.remove('active');
+      backdrop.classList.remove('visible');
+    }
 
     // Also close modals and dropdowns
     closeModals();
     closeAppMenu();
+    hideDownloadsBar();
   }
 
   async function renderBookmarksList(query = '') {
@@ -2043,14 +2050,94 @@
     showToast(`Download finished: ${item.filename}`, 'success');
   }
 
-  function showDownloadsBar() {
+  async function toggleDownloadsBar() {
     const bar = document.getElementById('downloads-bar');
-    if (bar) bar.classList.add('visible');
+    if (!bar) return;
+    const isVisible = bar.classList.contains('visible') || bar.classList.contains('open');
+    if (isVisible) {
+      hideDownloadsBar();
+    } else {
+      await showDownloadsBar();
+    }
+  }
+
+  async function showDownloadsBar() {
+    const bar = document.getElementById('downloads-bar');
+    if (bar) {
+      bar.classList.add('visible');
+      bar.classList.add('open');
+    }
+    await renderAllDownloads();
   }
 
   function hideDownloadsBar() {
     const bar = document.getElementById('downloads-bar');
-    if (bar) bar.classList.remove('visible');
+    if (bar) {
+      bar.classList.remove('visible');
+      bar.classList.remove('open');
+    }
+  }
+
+  async function renderAllDownloads() {
+    const container = document.getElementById('downloads-container');
+    if (!container) return;
+
+    let items = [];
+    try {
+      items = await lit.getDownloads();
+    } catch (e) {
+      items = [];
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      container.innerHTML = `
+        <div class="downloads-empty">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <div>No recent downloads</div>
+          <button class="header-action-btn" id="empty-open-folder-btn" style="padding:4px 10px;margin-top:4px;">Open Downloads Folder</button>
+        </div>
+      `;
+      document.getElementById('empty-open-folder-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lit.showInFolder('');
+      });
+      return;
+    }
+
+    container.innerHTML = '';
+    items.slice(0, 30).forEach(item => {
+      const id = `dl-${item.id || sanitizeId(item.filename)}`;
+      const card = document.createElement('div');
+      card.id = id;
+      card.className = 'download-card';
+
+      const filePath = item.filePath || item.savePath || '';
+
+      card.innerHTML = `
+        <div style="color:var(--text-sub);display:flex;align-items:center;">${ICONS.download}</div>
+        <div class="download-card-info">
+          <div class="download-card-filename" title="${escapeHtml(item.filename || 'Download')}">${escapeHtml(item.filename || 'Download')}</div>
+          <div class="download-progress-bg">
+            <div class="download-progress-bar" style="width: 100%; background: #ffffff;"></div>
+          </div>
+        </div>
+        <div class="download-actions">
+          <button class="download-action-btn" title="Open file" id="${id}-open">${ICONS.check}</button>
+          <button class="download-action-btn" title="Show in folder" id="${id}-folder">${ICONS.folder}</button>
+        </div>
+      `;
+
+      card.querySelector(`#${id}-open`)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lit.openDownload(filePath);
+      });
+      card.querySelector(`#${id}-folder`)?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        lit.showInFolder(filePath);
+      });
+
+      container.appendChild(card);
+    });
   }
 
   function renderDownloadItem(item) {
@@ -2157,12 +2244,22 @@
 
   function toggleAppMenu() {
     const menu = document.getElementById('app-menu');
-    if (menu) menu.classList.toggle('visible');
+    if (!menu) return;
+    const isOpen = menu.classList.contains('visible') || menu.classList.contains('open');
+    if (isOpen) {
+      closeAppMenu();
+    } else {
+      menu.classList.add('visible');
+      menu.classList.add('open');
+    }
   }
 
   function closeAppMenu() {
     const menu = document.getElementById('app-menu');
-    if (menu) menu.classList.remove('visible');
+    if (menu) {
+      menu.classList.remove('visible');
+      menu.classList.remove('open');
+    }
   }
 
   function handleMenuAction(action) {
@@ -2178,19 +2275,19 @@
         openPanel('history');
         break;
       case 'downloads':
-        showDownloadsBar();
+        toggleDownloadsBar();
         break;
       case 'find':
         showFindBar();
         break;
       case 'passwords':
-        openSettingsModal('passwords');
+        lit.newTab('lit://settings#passwords');
         break;
       case 'settings':
-        openSettingsModal('general');
+        lit.newTab('lit://settings');
         break;
       case 'about':
-        openAboutModal();
+        lit.newTab('lit://settings#about');
         break;
     }
   }
@@ -2413,8 +2510,14 @@
     });
 
     // Downloads button in toolbar
-    document.getElementById('btn-downloads')?.addEventListener('click', () => {
-      showDownloadsBar();
+    document.getElementById('btn-downloads')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDownloadsBar();
+    });
+
+    document.getElementById('btn-open-downloads-folder')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      lit.showInFolder('');
     });
 
     // App menu
@@ -2516,15 +2619,44 @@
       lit.updateSettings({ adBlocker: e.target.checked });
     });
 
-    // Click outside handler for popup & dropdown
+    // Click outside handler for popup & dropdowns
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('#app-menu') && !e.target.closest('#menu-btn')) {
+      if (!e.target.closest('#app-menu') && !e.target.closest('#btn-menu') && !e.target.closest('#menu-btn')) {
         closeAppMenu();
+      }
+      if (!e.target.closest('#downloads-bar') && !e.target.closest('#btn-downloads')) {
+        hideDownloadsBar();
       }
       if (!e.target.closest('#autofill-popup')) {
         hideAutofillPopup();
       }
     });
+
+    // Bridge shortcut events from main process (CmdOrCtrl+J, CmdOrCtrl+F, CmdOrCtrl+H, etc.)
+    if (typeof lit.onToggleDownloads === 'function') {
+      lit.onToggleDownloads(() => toggleDownloadsBar());
+    }
+    if (typeof lit.onOpenFind === 'function') {
+      lit.onOpenFind(() => showFindBar());
+    }
+    if (typeof lit.onToggleHistory === 'function') {
+      lit.onToggleHistory(() => {
+        if (activePanel === 'history') closePanels();
+        else openPanel('history');
+      });
+    }
+    if (typeof lit.onPromptBookmark === 'function') {
+      lit.onPromptBookmark(() => toggleBookmarkActiveTab());
+    }
+    if (typeof lit.onFocusUrlBar === 'function') {
+      lit.onFocusUrlBar(() => {
+        const input = document.getElementById('url-input');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      });
+    }
   }
 
   // ============================================================================

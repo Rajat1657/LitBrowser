@@ -1,6 +1,6 @@
 {
   "name": "lit-browser",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A fast, ultra-lightweight Windows browser with built-in ad blocking and zero bloat",
   "main": "main.js",
   "scripts": {

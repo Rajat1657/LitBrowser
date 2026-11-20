@@ -81,7 +81,7 @@ try {
 // -------------------------------------------------------------
 // Constants & Application State
 // -------------------------------------------------------------
-const CHROME_HEIGHT = 104; // 104px chrome area from top
+const CHROME_HEIGHT = 86; // 86px modern unified chrome area from top
 let mainWindow = null;
 let activeTabId = null;
 const tabs = new Map(); // tabId -> { id, view, url, title, favicon, loading, canGoBack, canGoForward, blockedCount }
@@ -400,6 +400,42 @@ function switchTab(tabId) {
   emitToRenderer(['active-tab-changed', 'activeTabChanged', 'onActiveTabChanged'], tabId);
 }
 
+let lastTabCreateTime = 0;
+let lastTabCloseTime = 0;
+
+function safeCreateTab(initialUrl) {
+  const now = Date.now();
+  if (now - lastTabCreateTime < 300) return null;
+  lastTabCreateTime = now;
+  return createTab(initialUrl);
+}
+
+function safeCloseTab(tabId) {
+  const now = Date.now();
+  if (now - lastTabCloseTime < 300) return;
+  lastTabCloseTime = now;
+
+  const targetId = tabId || activeTabId;
+  if (!targetId || !tabs.has(targetId)) return;
+
+  if (tabs.size === 1) {
+    const onlyTab = tabs.get(targetId);
+    if (onlyTab) {
+      if (onlyTab.url !== 'lit://newtab') {
+        onlyTab.url = 'lit://newtab';
+        onlyTab.title = 'New Tab';
+        onlyTab.favicon = '';
+        onlyTab.blockedCount = 0;
+        onlyTab.view.webContents.loadURL('lit://newtab').catch(() => {});
+        emitTabUpdated(targetId);
+      }
+      return;
+    }
+  }
+
+  closeTab(targetId);
+}
+
 function closeTab(tabId) {
   if (!tabs.has(tabId)) return;
   const tab = tabs.get(tabId);
@@ -675,10 +711,10 @@ function setupTabWebContents(tab) {
 
     if (ctrl && !shift && !alt && key === 't') {
       event.preventDefault();
-      createTab();
+      safeCreateTab();
     } else if (ctrl && !shift && !alt && key === 'w') {
       event.preventDefault();
-      closeTab(tab.id);
+      safeCloseTab(tab.id);
     } else if (ctrl && !shift && !alt && key === 'tab') {
       event.preventDefault();
       switchNextTab();
@@ -744,13 +780,13 @@ function setupApplicationMenu() {
         {
           label: 'New Tab',
           accelerator: 'CmdOrCtrl+T',
-          click: () => createTab()
+          click: () => safeCreateTab()
         },
         {
           label: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
           click: () => {
-            if (activeTabId) closeTab(activeTabId);
+            if (activeTabId) safeCloseTab(activeTabId);
           }
         },
         { type: 'separator' },
@@ -1046,11 +1082,11 @@ function registerAllIpcHandlers() {
 
   // Tabs
   registerIpcAction(['newTab', 'new-tab', 'tabs:newTab'], (url) => {
-    return createTab(url);
+    return safeCreateTab(url);
   });
 
   registerIpcAction(['closeTab', 'close-tab', 'tabs:closeTab'], (tabId) => {
-    closeTab(tabId || activeTabId);
+    safeCloseTab(tabId || activeTabId);
   });
 
   registerIpcAction(['switchTab', 'switch-tab', 'tabs:switchTab'], (tabId) => {

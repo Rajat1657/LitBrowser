@@ -2540,19 +2540,8 @@
         return;
       }
 
-      // Ctrl + T -> New tab
-      if (isCtrlOrCmd && (e.key === 't' || e.key === 'T')) {
-        e.preventDefault();
-        lit.newTab();
-        return;
-      }
-
-      // Ctrl + W -> Close active tab
-      if (isCtrlOrCmd && (e.key === 'w' || e.key === 'W')) {
-        e.preventDefault();
-        if (state.activeTabId) lit.closeTab(state.activeTabId);
-        return;
-      }
+      // Ctrl + T and Ctrl + W are handled globally by Electron Menu accelerators
+      // to avoid double-firing.
 
       // Ctrl + R or F5 -> Reload
       if ((isCtrlOrCmd && (e.key === 'r' || e.key === 'R')) || e.key === 'F5') {
